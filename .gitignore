@@ -1,0 +1,8 @@
+.env
+.idea
+signals/*
+private-stg-key.txt
+public-key.txt
+test.py
+*.session
+*.session-journal
