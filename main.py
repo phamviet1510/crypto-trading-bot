@@ -2,10 +2,11 @@
 from pyrogram import Client
 from pyrogram import filters
 import os
+import sys
 import json
-import requests
-from function import find_price_in_text, detect_parameters, send_futures_order, send_slack_msg
+from function import detect_parameters, send_futures_order, send_slack_msg
 from config.env import TELEGRAM_ACCOUNT, PHONE_NR, API_ID, API_HASH
+from config.const import SOURCE_MAP
 
 
 app = Client(
@@ -16,10 +17,6 @@ app = Client(
 )
 
 
-# filters.chat(SOURCE_CHAT)
-# -1001756782614 - Alway Win Trade FREE
-# -1001639229723 - ZKReceiver
-# -1001686155182 ZK(Premium)
 @app.on_message(
     (filters.regex("Binance Futures")
      | filters.regex("Kucoin Futures")
@@ -33,58 +30,51 @@ app = Client(
      | filters.regex("SHORT 🛑")
      | filters.regex("Stoploss ⛔")
      | filters.regex("Enjoy ur profits")
+     | filters.regex("(Binance)")
      )
-    # & (filters.chat(-1001756782614) | filters.chat(-1001639229723))
+    & (filters.chat(-1001756782614) | filters.chat(-1001639229723) | filters.chat(-1001686155182))
 )
+
 
 def my_handler(client, message):
     msg_id = None
-    payload = detect_parameters(message.text)
+    print(f"Message from {message.chat.title} id {message.chat.id}: {message.text}")
 
-    if message.chat.title == 'ZAYK (Premium)':
-        print(f"Message from {message.chat.title} id {message.chat.id}: {message.text}")
+    if SOURCE_MAP[message.chat.id] is None:
+        print("Skip follow signals")
+    
+    print(f"Message from {message.chat.title} id {message.chat.id}: {message.text}")
+    payload = detect_parameters(message.text, SOURCE_MAP[message.chat.id])
 
+    if message.reply_to_message_id is not None:
+        msg_id = message.reply_to_message_id
+        try:
+            f_content = open(f"./signals/signal_{message.chat.id}_{msg_id}.json", "r")
+            send_slack_msg(message.text)
+        except:
+            print("An exception occurred")
+            
 
-    if payload is not None and message.chat.id == -1001756782614:
+    if payload is not None:
         msg_id = message.id
         data = {
             "id": message.id,
             "text": message.text
         }
-        with open(f"signals/signal_{msg_id}.json", "w") as outfile:
+        with open(f"signals/signal_{message.chat.id}_{msg_id}.json", "w") as outfile:
             json.dump(data, outfile)
 
         print(f"payload: {payload}")
 
         if payload is not None:
-            order_payload = {
-                "coin": payload["coin"],
-                "currency": payload["currency"],
-                "side": payload["side"],
-                "type": 2,
-                "mode": 1,
-                "amount": str(round(1000 / float(payload["price"]), 2)),
-                "price": payload["price"],
-                "leverage": 20,
-                "collateral": 1
-            }
-
-            res = send_futures_order(order_payload)
-
-            # print(res)
+            res = send_futures_order(payload)
             
             #receive res order id & find position
             #769143012352856749
-
-            send_slack_msg(message.text)
-
-    if message.reply_to_message_id is not None:
-        msg_id = message.reply_to_message_id
-        try:
-            f_content = open(f"./signals/signal_{msg_id}.json", "r")
-            send_slack_msg(message.text)
-        except:
-            print("An exception occurred")
+            if SOURCE_MAP[message.chat.id] == "alwaystrade":
+                send_slack_msg(message.text)
+            else:
+                send_slack_msg(payload['full_signals'])
 
 
 app.run()
