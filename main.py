@@ -53,6 +53,8 @@ def my_handler(client, message):
             send_slack_msg(message.text)
         except:
             print("An exception occurred")
+
+        return "Done"
             
 
     if payload is not None:
@@ -76,5 +78,7 @@ def my_handler(client, message):
             else:
                 send_slack_msg(payload['full_signals'])
 
+        return "Done"
+    
 
 app.run()
