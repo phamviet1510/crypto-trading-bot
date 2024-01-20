@@ -45,16 +45,6 @@ def my_handler(client, message):
     
     print(f"Message from {message.chat.title} id {message.chat.id}: {message.text}")
     payload = detect_parameters(message.text, SOURCE_MAP[message.chat.id])
-
-    if message.reply_to_message_id is not None:
-        msg_id = message.reply_to_message_id
-        try:
-            f_content = open(f"./signals/signal_{message.chat.id}_{msg_id}.json", "r")
-            send_slack_msg(message.text)
-        except:
-            print("An exception occurred")
-
-        return "Done"
             
 
     if payload is not None:
@@ -77,6 +67,16 @@ def my_handler(client, message):
                 send_slack_msg(message.text)
             else:
                 send_slack_msg(payload['full_signals'])
+
+        return "Done"
+    
+    else:
+        msg_id = message.reply_to_message_id
+        try:
+            f_content = open(f"./signals/signal_{message.chat.id}_{msg_id}.json", "r")
+            send_slack_msg(message.text)
+        except:
+            print("An exception occurred")
 
         return "Done"
     
