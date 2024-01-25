@@ -32,7 +32,7 @@ app = Client(
      | filters.regex("Enjoy ur profits")
      | filters.regex("(Binance)")
      )
-    & (filters.chat(-1001756782614) | filters.chat(-1001639229723) | filters.chat(-1001686155182))
+    & (filters.chat(-1001404749961) | filters.chat(-1001639229723) | filters.chat(-1001686155182))
 )
 
 
@@ -46,7 +46,6 @@ def my_handler(client, message):
     print(f"Message from {message.chat.title} id {message.chat.id}: {message.text}")
     payload = detect_parameters(message.text, SOURCE_MAP[message.chat.id])
             
-
     if payload is not None:
         msg_id = message.id
         data = {
@@ -64,7 +63,7 @@ def my_handler(client, message):
             #receive res order id & find position
             #769143012352856749
             if SOURCE_MAP[message.chat.id] == "alwaystrade":
-                send_slack_msg(message.text)
+                send_slack_msg(message.text) 
             else:
                 send_slack_msg(payload['full_signals'])
 
